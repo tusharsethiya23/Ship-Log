@@ -26,3 +26,12 @@ export const link = 'text-blue-400 hover:underline';
 
 // Warning / info message text.
 export const notice = 'text-amber-400';
+
+// Added in Step 13: form fields.
+
+// Text boxes and dropdowns.
+export const input =
+  'w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-green-600';
+
+// Small heading above a form field.
+export const label = 'mb-1 block text-sm font-medium text-neutral-300';

@@ -1,10 +1,9 @@
-// The logged-in page at /dashboard. For now: who you are, plus buttons to
-// check your commits, claim a rest day, and log out. The settings form
-// (timezone, repos) comes in the next step.
+// The logged-in page at /dashboard: who you are, quick actions, and settings.
 
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { claimRestDay, getMe, logout, syncNow } from '../api/me.js';
+import SettingsForm from '../components/dashboard/SettingsForm.jsx';
 import { btn, btnSecondary, card, notice, page } from '../utils/ui.js';
 
 export default function Dashboard() {
@@ -60,7 +59,10 @@ export default function Dashboard() {
             className={btn}
             onClick={() =>
               run(syncNow, (r) =>
-                r.sync.skipped ? `Skipped: ${r.sync.skipped}` : `Found ${r.sync.commitCount} commit(s) today. Status: ${r.sync.status}`
+                r.sync.skipped
+                  ? `Skipped: ${r.sync.skipped}`
+                  : `Found ${r.sync.commitCount} commit(s) today. Status: ${r.sync.status}` +
+                    (r.sync.unreachable.length ? `. Could not read: ${r.sync.unreachable.join(', ')}` : '')
               )
             }
           >
@@ -78,6 +80,10 @@ export default function Dashboard() {
         </div>
         {message && <p className={`mt-4 ${notice}`}>{message}</p>}
       </section>
+
+      {/* When settings are saved, replace the user so the header (today's date,
+          timezone) updates immediately. */}
+      <SettingsForm user={user} onSaved={setUser} />
     </main>
   );
 }
