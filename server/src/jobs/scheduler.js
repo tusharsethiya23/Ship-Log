@@ -2,6 +2,7 @@
 
 import { runDayCloseJob } from './dayClose.job.js';
 import { runIngestJob } from './ingest.job.js';
+import { runPosterJob } from './poster.job.js';
 import { logger } from '../config/logger.js';
 
 const timers = [];
@@ -34,6 +35,7 @@ function every(name, intervalMs, job) {
 
 export function startScheduler() {
   every('dayClose', 5 * 60 * 1000, runDayCloseJob); // every 5 minutes
+  every('poster', 5 * 60 * 1000, runPosterJob); // every 5 minutes
   every('ingest', 15 * 60 * 1000, runIngestJob); // every 15 minutes
 }
 

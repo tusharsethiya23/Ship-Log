@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { claimRestDay, getMe, logout, syncNow } from '../api/me.js';
 import SettingsForm from '../components/dashboard/SettingsForm.jsx';
+import IntegrationsForm from '../components/dashboard/IntegrationsForm.jsx';
 import { btn, btnSecondary, card, notice, page } from '../utils/ui.js';
 
 export default function Dashboard() {
@@ -62,7 +63,7 @@ export default function Dashboard() {
                 r.sync.skipped
                   ? `Skipped: ${r.sync.skipped}`
                   : `Found ${r.sync.commitCount} commit(s) today. Status: ${r.sync.status}` +
-                    (r.sync.unreachable.length ? `. Could not read: ${r.sync.unreachable.join(', ')}` : '')
+                  (r.sync.unreachable.length ? `. Could not read: ${r.sync.unreachable.join(', ')}` : '')
               )
             }
           >
@@ -84,6 +85,7 @@ export default function Dashboard() {
       {/* When settings are saved, replace the user so the header (today's date,
           timezone) updates immediately. */}
       <SettingsForm user={user} onSaved={setUser} />
+      <IntegrationsForm />
     </main>
   );
 }
