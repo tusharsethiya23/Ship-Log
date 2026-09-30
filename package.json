@@ -1,5 +1,5 @@
 {
   "name": "ship-log",
   "private": true,
-  "workspaces": ["server"]
+  "workspaces": ["server", "client"]
 }
