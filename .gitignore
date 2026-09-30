@@ -1,0 +1,15 @@
+# Dependencies: huge, and anyone can recreate them with `npm install`
+node_modules/
+
+# Secrets: NEVER commit these. They hold your GitHub secret, DB password, etc.
+.env
+.env.*
+# ...but DO commit the example file, which contains no real secrets
+!.env.example
+
+# Build output (client build, later)
+dist/
+
+# Logs and OS junk
+*.log
+.DS_Store
