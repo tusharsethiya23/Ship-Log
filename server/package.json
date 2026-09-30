@@ -8,7 +8,8 @@
     "dev:worker": "node --watch --env-file=.env src/worker.js",
     "start": "node src/server.js",
     "start:worker": "node src/worker.js",
-    "test": "node --test"
+    "test": "node --test",
+    "close-days": "node --env-file=.env scripts/close-days.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

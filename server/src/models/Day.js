@@ -46,6 +46,11 @@ const daySchema = new mongoose.Schema(
     // Set when the day-close job locks the day. A day without this value is
     // still "open" (today), so its status may still change.
     finalizedAt: { type: Date, default: null },
+    // Added in Step 10: filled in when the day is closed.
+    // The streak length right after this day (used for "Day 23" posts).
+    streakAfter: { type: Number, default: 0, min: 0 },
+    // If this day broke a streak, how long the lost streak was (else 0).
+    brokenStreakLength: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );
