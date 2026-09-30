@@ -6,6 +6,7 @@ import authRoutes from './auth.routes.js';
 import meRoutes from './me.routes.js';
 import restRoutes from './rest.routes.js';
 import syncRoutes from './sync.routes.js';
+import profileRoutes from './profile.routes.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/auth', authRoutes); // login and logout
 router.use('/api/me', meRoutes); // the logged-in user's own data
 router.use('/api/rest-day', restRoutes); // claim or cancel today's rest day
 router.use('/api/sync', syncRoutes); // check GitHub for today's commits now
+router.use('/api/u', profileRoutes); // PUBLIC profiles and calendars
 
 export default router;
