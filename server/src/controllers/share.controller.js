@@ -76,8 +76,13 @@ export async function sharePage(req, res) {
 }
 
 // GET /share/:username/card.png
+
 export async function cardImage(req, res) {
   const user = await loadUser(req.params.username);
   const { png } = await getShareCard(user);
-  res.set('Cache-Control', 'public, max-age=300').type('png').send(png);
+  res
+    .set('Cache-Control', 'public, max-age=300')
+    .set('Cross-Origin-Resource-Policy', 'cross-origin')
+    .type('png')
+    .send(png);
 }

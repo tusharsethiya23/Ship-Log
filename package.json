@@ -1,5 +1,9 @@
 {
   "name": "ship-log",
   "private": true,
-  "workspaces": ["server", "client"]
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "build": "npm run build --workspace client",
+    "start": "npm start --workspace server"
+  }
 }

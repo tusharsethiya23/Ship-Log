@@ -10,6 +10,11 @@ const envSchema = z.object({
   // Only these three values are allowed. If not set, default to 'development'.
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
+  // "true" makes the web server also run the scheduled jobs itself, so ONE
+  // service does everything (used in production). Leave it unset on your own
+  // computer, where you run the worker separately.
+  RUN_SCHEDULER: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
+
   // Env vars are ALWAYS strings ("4000", not 4000). z.coerce.number()
   // converts the string to a number, then we check it's a positive integer.
   PORT: z.coerce.number().int().positive().default(4000),
