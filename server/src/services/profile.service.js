@@ -75,3 +75,11 @@ export async function getYearCalendar(user, year) {
     .select('date status commitCount -_id')
     .lean();
 }
+
+// Added in Step 16: every recorded day from `startDate` onwards. The share
+// card uses it to draw the mini heatmap.
+export async function getDaysSince(user, startDate) {
+  return Day.find({ userId: user._id, date: { $gte: startDate } })
+    .select('date status -_id')
+    .lean();
+}

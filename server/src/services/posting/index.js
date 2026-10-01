@@ -33,7 +33,9 @@ export function connectedPlatforms(user) {
 }
 
 // Publishes `text` on one platform. Throws a PostError if it fails.
-export async function sendPost(platform, user, text) {
+// `card` (optional) is a { png, title, description } preview card. Only
+// Bluesky uses it.
+export async function sendPost(platform, user, text, { card = null } = {}) {
   if (platform === 'discord') {
     return sendDiscord(decrypt(user.integrations.discordWebhookEncrypted), text);
   }
@@ -44,12 +46,12 @@ export async function sendPost(platform, user, text) {
         appPassword: decrypt(user.integrations.bluesky.appPasswordEncrypted),
       },
       text,
-      profileUrl(user.username)
+      profileUrl(user.username),
+      card
     );
   }
   throw new PostError(`Unknown platform: ${platform}`, { permanent: true });
 }
-
 // The "Test" button. Discord gets a real (private-channel) message. Bluesky
 // only checks the login, so testing never publishes a public post.
 export async function checkPlatform(platform, user) {
