@@ -2,6 +2,7 @@
 
 import { User } from '../models/User.js';
 import { closeDaysForUser } from '../services/dayClose.service.js';
+import { alertAdmin } from '../services/alert.service.js';
 import { logger } from '../config/logger.js';
 
 export async function runDayCloseJob() {
@@ -31,5 +32,10 @@ export async function runDayCloseJob() {
 
   if (daysClosed > 0 || failed > 0) {
     logger.info('Day close job finished', { daysClosed, failed });
+  }
+
+  // Days that can't close are days that can't count, so tell the admin.
+  if (failed > 0) {
+    await alertAdmin('dayclose-failed', `Day close failed for ${failed} user(s). Check the worker log.`);
   }
 }

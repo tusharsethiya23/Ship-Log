@@ -14,9 +14,11 @@ import { sendBluesky, verifyBluesky } from './bluesky.js';
 export const SECRET_FIELDS =
   '+integrations.discordWebhookEncrypted +integrations.bluesky.appPasswordEncrypted';
 
-// The user's public page, used as the link inside posts.
+// The link put inside every post. It points at our /share page instead of the
+// profile page directly, because /share carries the preview tags that Discord
+// and other apps read. People who click it are redirected to the profile.
 export function profileUrl(username) {
-  return `${env.CLIENT_URL}/u/${username}`;
+  return `${env.CLIENT_URL}/share/${username}`;
 }
 
 // Which platforms is this user fully connected to?

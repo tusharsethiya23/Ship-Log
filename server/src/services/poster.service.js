@@ -16,6 +16,7 @@ import { logger } from '../config/logger.js';
 import { buildPostText } from './posting/templates.js';
 import { PostError } from './posting/postError.js';
 import { SECRET_FIELDS, connectedPlatforms, profileUrl, sendPost } from './posting/index.js';
+import { alertAdmin } from './alert.service.js';
 
 // Only days closed in the last 36 hours get posted. This stops someone who
 // connects Discord today from getting an avalanche of old posts.
@@ -122,6 +123,7 @@ export async function sendPendingPosts() {
         post.status = 'failed';
         failed += 1;
         logger.error(`Post failed for good (${post.platform}, ${post.date})`, { error: post.error });
+        await alertAdmin('post-failed', `A ${post.platform} post for ${post.date} failed for good: ${post.error}`);
       } else {
         // Stays "pending". The next run (5 minutes later) tries again.
         retrying += 1;

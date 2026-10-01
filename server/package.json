@@ -10,7 +10,8 @@
     "start:worker": "node src/worker.js",
     "test": "node --test",
     "close-days": "node --env-file=.env scripts/close-days.js",
-        "poster": "node --env-file=.env scripts/run-poster.js"
+    "poster": "node --env-file=.env scripts/run-poster.js",
+    "test-alert": "node --env-file=.env scripts/test-alert.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

@@ -3,6 +3,7 @@
 import { runDayCloseJob } from './dayClose.job.js';
 import { runIngestJob } from './ingest.job.js';
 import { runPosterJob } from './poster.job.js';
+import { alertAdmin } from '../services/alert.service.js';
 import { logger } from '../config/logger.js';
 
 const timers = [];
@@ -22,8 +23,9 @@ function every(name, intervalMs, job) {
     try {
       await job();
     } catch (err) {
-      // A crashing job must not kill the worker.
+      // A crashing job must not kill the worker, but you should hear about it.
       logger.error(`${name} crashed`, err);
+      await alertAdmin(`crash:${name}`, `The ${name} job crashed: ${err.message}`);
     } finally {
       running = false;
     }
