@@ -11,7 +11,7 @@
 
 import { User } from '../models/User.js';
 import { Day } from '../models/Day.js';
-import { Streak } from '../models/Streak.js';
+import { Streak } from '../models/streak.js';
 import { addDays, getTodayString } from '../utils/time.js';
 import { applyDay, rebuildStreak } from './streak.service.js';
 import { ingestUser } from './ingest.service.js';

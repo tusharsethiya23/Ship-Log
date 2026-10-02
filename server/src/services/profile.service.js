@@ -7,7 +7,7 @@
 
 import { User } from '../models/User.js';
 import { Day } from '../models/Day.js';
-import { Streak } from '../models/Streak.js';
+import { Streak } from '../models/streak.js';
 import { createEmptyStreak } from './streak.service.js';
 import { getTodayString } from '../utils/time.js';
 
