@@ -22,7 +22,7 @@ import { SECRET_FIELDS, connectedPlatforms, profileUrl, sendPost } from './posti
 // Only days closed in the last 36 hours get posted. This stops someone who
 // connects Discord today from getting an avalanche of old posts.
 const LOOKBACK_MS = 36 * 60 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 24;
 
 // What we load about a user for posting: the name, the public Bluesky handle,
 // and the encrypted secrets.
