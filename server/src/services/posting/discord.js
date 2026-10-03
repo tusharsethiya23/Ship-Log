@@ -3,11 +3,6 @@
 
 import { PostError } from './postError.js';
 
-// Posts a message to a Discord channel through a webhook URL.
-// A webhook is a private address: anyone who has it can post to that channel.
-
-import { PostError } from './postError.js';
-
 export async function sendDiscord(webhookUrl, text) {
   let res;
   try {
