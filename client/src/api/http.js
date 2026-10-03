@@ -31,6 +31,11 @@ export async function http(path, { method = 'GET', body } = {}) {
   }
 
   if (!res.ok) {
+    // 502, 503 and 504 without our usual JSON error come from the hosting
+    // service, not from our code: the app is starting up or restarting.
+    if ([502, 503, 504].includes(res.status) && !data?.error) {
+      throw new ApiError(res.status, 'The server is waking up or restarting. Wait a minute and try again.');
+    }
     throw new ApiError(res.status, data?.error?.message ?? `Request failed (${res.status})`);
   }
   return data;

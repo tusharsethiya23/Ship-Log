@@ -18,6 +18,7 @@ export default defineConfig({
       '/api': 'http://localhost:4000',
       '/auth': 'http://localhost:4000',
       '/share': 'http://localhost:4000',
+      '/badge': 'http://localhost:4000',
     },
   },
 });

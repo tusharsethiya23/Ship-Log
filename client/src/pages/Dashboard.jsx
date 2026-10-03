@@ -1,29 +1,49 @@
-// The logged-in page at /dashboard: who you are, quick actions, and settings.
+// The logged-in page at /dashboard: your streak, quick actions, the README
+// badge, and settings.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { claimRestDay, getMe, logout, syncNow } from '../api/me.js';
-import SettingsForm from '../components/dashboard/SettingsForm.jsx';
+import { cancelRestDay, claimRestDay, getMe, logout, syncNow } from '../api/me.js';
+import { getProfile } from '../api/profile.js';
+import BadgeCard from '../components/dashboard/BadgeCard.jsx';
 import IntegrationsForm from '../components/dashboard/IntegrationsForm.jsx';
+import SettingsForm from '../components/dashboard/SettingsForm.jsx';
+import StreakCard from '../components/profile/StreakCard.jsx';
 import { btn, btnSecondary, card, notice, page } from '../utils/ui.js';
+import DeleteAccountCard from '../components/dashboard/DeleteAccountCard.jsx';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null); // the same data your public page shows
   const [message, setMessage] = useState('');
+
+  // Loads (or reloads) the streak data. A failure here is not worth breaking
+  // the whole page for, so the streak card simply stays as it was.
+  const refreshProfile = useCallback(async (username) => {
+    try {
+      setProfile(await getProfile(username));
+    } catch {
+      // keep showing the previous data
+    }
+  }, []);
 
   useEffect(() => {
     getMe()
-      .then((data) => setUser(data.user))
+      .then((data) => {
+        setUser(data.user);
+        refreshProfile(data.user.username);
+      })
       // Not logged in (or the session expired): go back to the home page.
       .catch(() => navigate('/'));
-  }, [navigate]);
+  }, [navigate, refreshProfile]);
 
-  // Runs an action, then shows its result (or its error) as a message.
+  // Runs an action, shows its result (or its error), then refreshes the streak.
   async function run(action, describe) {
     setMessage('Working...');
     try {
       setMessage(describe(await action()));
+      await refreshProfile(user.username);
     } catch (err) {
       setMessage(err.message);
     }
@@ -42,6 +62,9 @@ export default function Dashboard() {
     );
   }
 
+  // 'none' = nothing yet today, 'rest' = rest day claimed, 'active' = committed.
+  const todayStatus = profile?.todayStatus ?? 'none';
+
   return (
     <main className={page}>
       <header className="flex items-center gap-4">
@@ -53,6 +76,8 @@ export default function Dashboard() {
           </p>
         </div>
       </header>
+
+      {profile && <StreakCard profile={profile} />}
 
       <section className={card}>
         <div className="flex flex-wrap gap-2.5">
@@ -69,9 +94,19 @@ export default function Dashboard() {
           >
             Check my commits now
           </button>
-          <button className={btn} onClick={() => run(claimRestDay, (r) => `Rest day claimed for ${r.restDay.date}`)}>
-            Take today as my rest day
-          </button>
+
+          {/* The rest day button changes with today's state. */}
+          {todayStatus === 'none' && (
+            <button className={btn} onClick={() => run(claimRestDay, (r) => `Rest day claimed for ${r.restDay.date}`)}>
+              Take today as my rest day
+            </button>
+          )}
+          {todayStatus === 'rest' && (
+            <button className={btnSecondary} onClick={() => run(cancelRestDay, (r) => `Rest day cancelled for ${r.date}`)}>
+              Cancel today's rest day
+            </button>
+          )}
+
           <Link className={btnSecondary} to={`/u/${user.username}`}>
             View my public page
           </Link>
@@ -79,13 +114,26 @@ export default function Dashboard() {
             Log out
           </button>
         </div>
+
+        {todayStatus === 'active' && (
+          <p className="mt-3 text-sm text-neutral-400">You've committed today, so you don't need a rest day.</p>
+        )}
         {message && <p className={`mt-4 ${notice}`}>{message}</p>}
       </section>
 
-      {/* When settings are saved, replace the user so the header (today's date,
-          timezone) updates immediately. */}
-      <SettingsForm user={user} onSaved={setUser} />
+      <BadgeCard username={user.username} />
+
+      {/* When settings are saved, update the header and reload the streak,
+          because a new timezone can change which day "today" is. */}
+      <SettingsForm
+        user={user}
+        onSaved={(updated) => {
+          setUser(updated);
+          refreshProfile(updated.username);
+        }}
+      />
       <IntegrationsForm />
+      <DeleteAccountCard username={user.username} onDeleted={() => navigate('/')} />
     </main>
   );
 }

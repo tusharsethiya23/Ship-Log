@@ -128,3 +128,37 @@ export async function countCommits(accessToken, { fullName, author, since, until
   const commits = await res.json();
   return { status: 'ok', count: commits.length };
 }
+
+
+// ---------------------------------------------------------------------------
+// Added in Step 20: removing our access to a user's GitHub account.
+// ---------------------------------------------------------------------------
+
+// Revokes the user's authorization of our app, which also invalidates every
+// token we hold for them. After this, Ship Log disappears from the "Authorized
+// OAuth Apps" list in their GitHub settings. Authenticates with our app's own
+// client ID and secret.
+//
+// Returns true when access is gone (revoked now, or already revoked), and
+// false when GitHub could not be reached. Never throws: deleting an account
+// must not fail just because GitHub is slow.
+export async function revokeGitHubAccess(accessToken) {
+  try {
+    const basic = Buffer.from(`${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`).toString('base64');
+    const res = await fetch(`https://api.github.com/applications/${env.GITHUB_CLIENT_ID}/grant`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Basic ${basic}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ship-log',
+      },
+      body: JSON.stringify({ access_token: accessToken }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    // 204 = revoked now. 404 = already gone (the user revoked it themselves).
+    return res.status === 204 || res.status === 404;
+  } catch {
+    return false;
+  }
+}

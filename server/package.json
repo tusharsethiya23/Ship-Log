@@ -8,11 +8,10 @@
     "dev:worker": "node --watch --env-file=.env src/worker.js",
     "start": "node src/server.js",
     "start:worker": "node src/worker.js",
-    "test": "node --test",
+    "test": "node --env-file=.env --test \"tests/**/*.test.js\"",
     "close-days": "node --env-file=.env scripts/close-days.js",
     "poster": "node --env-file=.env scripts/run-poster.js",
     "test-alert": "node --env-file=.env scripts/test-alert.js"
-    
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.9",

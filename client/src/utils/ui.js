@@ -35,3 +35,7 @@ export const input =
 
 // Small heading above a form field.
 export const label = 'mb-1 block text-sm font-medium text-neutral-300';
+
+// Added in Step 20: a red button for actions that cannot be undone.
+export const btnDanger =
+  'inline-block cursor-pointer rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-500 disabled:cursor-default disabled:opacity-40';

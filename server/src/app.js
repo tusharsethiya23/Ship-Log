@@ -76,7 +76,7 @@ app.use('/', routes);
 // a wrong one still gets a proper JSON 404.
 if (hasClientBuild) {
   app.use((req, res, next) => {
-    const isPageRequest = req.method === 'GET' && !/^\/(api|auth|share|health)(\/|$)/.test(req.path);
+       const isPageRequest = req.method === 'GET' && !/^\/(api|auth|share|badge|health)(\/|$)/.test(req.path);
     if (!isPageRequest) return next();
     res.sendFile(path.join(clientDist, 'index.html'));
   });

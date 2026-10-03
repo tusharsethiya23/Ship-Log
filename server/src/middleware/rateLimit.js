@@ -26,3 +26,7 @@ export const authLimiter = makeLimiter(15 * 60 * 1000, 30);
 
 // Logged-in routes (settings, sync, rest day): 120 per minute.
 export const apiLimiter = makeLimiter(60 * 1000, 120);
+
+// Badges embedded in READMEs are requested by services that share a few
+// addresses between many people, so they get a higher limit: 300 per minute.
+export const badgeLimiter = makeLimiter(60 * 1000, 300);

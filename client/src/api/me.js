@@ -10,4 +10,8 @@ export const updateMe = (changes) => http('/api/me', { method: 'PATCH', body: ch
 
 export const syncNow = () => http('/api/sync', { method: 'POST' });
 export const claimRestDay = () => http('/api/rest-day', { method: 'POST' });
+export const cancelRestDay = () => http('/api/rest-day', { method: 'DELETE' });
 export const logout = () => http('/auth/logout', { method: 'POST' });
+
+// Erases the account and all its data. The username is sent as confirmation.
+export const deleteAccount = (confirmUsername) => http('/api/me', { method: 'DELETE', body: { confirmUsername } });

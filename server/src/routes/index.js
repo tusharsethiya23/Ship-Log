@@ -9,6 +9,7 @@ import restRoutes from './rest.routes.js';
 import syncRoutes from './sync.routes.js';
 import profileRoutes from './profile.routes.js';
 import shareRoutes from './share.routes.js';
+import badgeRoutes from './badge.routes.js';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/api/rest-day', apiLimiter, restRoutes); // claim or cancel today's 
 router.use('/api/sync', apiLimiter, syncRoutes); // check GitHub for today's commits now
 router.use('/api/u', profileRoutes); // PUBLIC profiles and calendars (has its own limiter)
 router.use('/share', shareRoutes); // PUBLIC link-preview pages (has its own limiter)
+router.use('/badge', badgeRoutes); // PUBLIC streak badge images (has its own limiter)
 
 export default router;
