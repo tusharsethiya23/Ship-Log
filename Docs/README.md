@@ -1,27 +1,31 @@
 # Ship Log
 
-A public coding streak that runs itself. Ship Log checks your GitHub commits every day, keeps your streak, shows it on a public profile page, and posts it to Discord and Bluesky automatically. Miss a day and the "streak broken" post goes out too, so quitting has a visible cost.
+A public coding streak that runs itself. Ship Log checks your GitHub activity every day, keeps your streak, shows it on a public profile page, and can post it to Discord and Bluesky automatically. Miss a day and the "streak broken" post goes out too, so quitting has a visible cost.
 
 ## Features
 
-- Log in with GitHub; no manual logging. A day counts when you push at least one commit to a tracked repo.
-- Streak engine with one rest day per week (Monday to Sunday).
+- Log in with GitHub; no manual logging. A day counts when you push at least one commit to a tracked public repo.
+- Optional: also count private activity, using the private contribution count GitHub shows on your profile (no private repo names, messages, or code are read).
+- Streak engine with one rest day per week (Monday to Sunday), claimable and cancellable from the dashboard.
 - Per-user timezone and "day ends at" hour, so night owls are handled.
+- Dashboard with your live streak, quick actions, and settings.
 - Public profile page (`/u/username`) with the streak, stats, and a year heatmap.
-- Automatic daily posts to Discord (webhook) and Bluesky (app password), with retries.
-- "Streak broken" posts, and a preview card image for shared links.
+- Embeddable README badge (`/badge/username/streak.svg`).
+- Automatic daily posts to Discord (webhook) and Bluesky (app password), with retries, plus "streak broken" posts.
+- Link previews: a generated streak card image for shared links and Bluesky posts.
 - Admin alerts to a Discord channel when a job or post fails.
+- Account deletion that erases everything and revokes the app's GitHub access.
 
 ## Tech stack
 
 - **Server:** Node.js, Express 5, MongoDB with Mongoose, zod, Luxon, `@napi-rs/canvas`
 - **Client:** React, Vite, React Router, Tailwind CSS
-- **Integrations:** GitHub OAuth and REST API, Discord webhooks, Bluesky (AT Protocol)
+- **Integrations:** GitHub OAuth, REST and GraphQL APIs, Discord webhooks, Bluesky (AT Protocol)
 
 ## How it works
 
 1. You log in with GitHub and choose your timezone and repos.
-2. Every 15 minutes the **ingest job** counts your commits for the current day.
+2. Every 15 minutes the **ingest job** counts your activity for the current day.
 3. Every 5 minutes the **day-close job** locks any finished day as `active`, `rest`, or `missed` and updates the streak. A final GitHub check runs first, so late commits still count.
 4. Every 5 minutes the **poster job** publishes posts for newly closed days, retrying failures.
 
@@ -35,10 +39,18 @@ The `days` collection is the source of truth. The `streaks` collection is a cach
 - Commits always win. Claiming a rest day and then committing counts as active and does not spend the rest day.
 - If GitHub can't be reached, a day stays open instead of being counted as missed.
 
+## Privacy and your data
+
+- Ship Log asks GitHub for one permission only: `read:user`.
+- Stored per user: GitHub id, username and avatar, settings, an encrypted GitHub token, the status and commit count of each day, post history, and (if connected) an encrypted Discord webhook and Bluesky app password.
+- The public API shows only streak numbers and, per day, the status and commit count. Repo names and tokens are never exposed.
+- "Delete account" erases all of the above and revokes the app's authorization on GitHub.
+
 ## Project structure
 
 ```
 ship-log/
+├── .github/workflows/       automatic checks on every push
 ├── client/                  React app
 │   └── src/
 │       ├── api/             calls to the server
@@ -47,16 +59,16 @@ ship-log/
 │       └── utils/           date helpers and shared Tailwind classes
 └── server/
     ├── assets/fonts/        fonts used to draw share cards
-    ├── scripts/             manual tools (close-days, run-poster, test-alert)
-    ├── tests/unit/          streak, date, and post-text tests
+    ├── scripts/             manual tools and the check scripts
+    ├── tests/               unit tests and an app start-up test
     └── src/
         ├── config/          env validation, database, logger
         ├── models/          User, Day, Streak, Post
         ├── routes/          URL tables
         ├── controllers/     request handlers
         ├── middleware/      auth, validation, rate limits, errors
-        ├── services/        streak rules, GitHub, ingest, day close,
-        │                    profile, share card, posting, alerts
+        ├── services/        streak rules, GitHub, ingest, day close, profile,
+        │                    badge, share card, posting, alerts
         ├── jobs/            scheduler and the three jobs
         ├── validators/      request schemas
         └── utils/           time, crypto, tokens, errors
@@ -83,64 +95,7 @@ ship-log/
 ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
-4. Add two fonts for the share card to `server/assets/fonts/`, named `font-regular.ttf` and `font-bold.ttf` (for example Inter, which is open source).
+4. Add two fonts for the share card to `server/assets/fonts/`, named `font-regular.ttf` and `font-bold.ttf` (for example Inter, which is open source). Without them cards use a fallback font.
 5. Start the three processes in separate terminals:
 ```bash
    npm run dev --workspace server          # API on http://localhost:4000
-   npm run dev --workspace client          # website on http://localhost:5173
-   npm run dev:worker --workspace server   # scheduled jobs
-```
-6. Open `http://localhost:5173` and log in.
-
-## Scripts
-
-| Command | What it does |
-|---|---|
-| `npm test --workspace server` | Runs the unit tests |
-| `npm run close-days --workspace server -- <username> [ISO time]` | Closes finished days for a user, optionally pretending it is a later time |
-| `npm run poster --workspace server` | Queues and sends posts once |
-| `npm run test-alert --workspace server` | Sends a test admin alert |
-| `npm run build` | Builds the website into `client/dist` |
-| `npm start` | Starts the server (serves the built website too) |
-
-## Settings
-
-All settings live in `server/.env` (see `server/.env.example`).
-
-| Variable | Purpose |
-|---|---|
-| `NODE_ENV` | `development`, `test`, or `production` |
-| `PORT` | Port the server listens on |
-| `MONGO_URI` | MongoDB connection string |
-| `CLIENT_URL` | Address of the website (used for redirects and links in posts) |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth app credentials |
-| `JWT_SECRET` | Signs login cookies (32+ characters) |
-| `TOKEN_ENCRYPTION_KEY` | Encrypts stored tokens (exactly 64 hex characters) |
-| `INTERNAL_JOB_SECRET` | Protects internal routes (16+ characters) |
-| `ADMIN_ALERT_WEBHOOK` | Discord webhook for failure alerts (optional) |
-| `RUN_SCHEDULER` | `true` makes the web server run the jobs itself (production) |
-
-## Deploy
-
-One web service runs everything: Express serves the API and the built website, and the scheduler runs inside it.
-
-- **Build command:** `npm install --include=dev && npm run build`
-- **Start command:** `npm start`
-- **Health check path:** `/health`
-- Set every variable above in the host's dashboard, with `NODE_ENV=production`, `RUN_SCHEDULER=true`, and `CLIENT_URL` set to the site's address.
-- Create a separate GitHub OAuth app for production with the live address as the homepage and `<address>/auth/github/callback` as the redirect URI.
-- Use an always-on plan. A service that sleeps stops the scheduler, so posts arrive late (streak counts stay correct, because days are re-checked against GitHub history).
-
-## Known limitations
-
-- Only public repos can be read. The login requests the minimum permission, `read:user`.
-- Only one worker should run at a time, otherwise a post could occasionally go out twice.
-- Commits must be linked to your GitHub account through the email on the commit.
-
-## Ideas for later
-
-Private repo support, an evening "streak at risk" reminder, a weekly summary post, an embeddable README badge, account deletion, and more posting platforms.
-
-## License
-
-Choose a license before making the repo public.
