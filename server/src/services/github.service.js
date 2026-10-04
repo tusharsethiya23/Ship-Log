@@ -162,3 +162,61 @@ export async function revokeGitHubAccess(accessToken) {
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Added in Step 22: counting private activity from the contributions GitHub
+// shows on the user's profile.
+// ---------------------------------------------------------------------------
+
+// Returns how many contributions the user made in private repositories
+// between `since` and `until`. We ask only for this number: GitHub does not
+// reveal which repos, or what was done.
+//
+// It is only above zero if the user has switched on "Include private
+// contributions on my profile" in their GitHub profile settings.
+//
+// Throws for problems that need attention (expired token, GitHub down).
+export async function countPrivateContributions(accessToken, { since, until }) {
+  const query = `
+    query($from: DateTime!, $to: DateTime!) {
+      viewer {
+        contributionsCollection(from: $from, to: $to) {
+          restrictedContributionsCount
+        }
+      }
+    }`;
+
+  const res = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'ship-log',
+    },
+    body: JSON.stringify({
+      query,
+      variables: {
+        from: toGitHubTime(since),
+        // "until" is the first moment of the NEXT day, and GitHub's "to"
+        // includes its own moment, so stop one second earlier.
+        to: toGitHubTime(new Date(until.getTime() - 1000)),
+      },
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  // Our saved token was revoked or expired: the user must log in again.
+  if (res.status === 401) {
+    const err = new Error('GitHub token is no longer valid');
+    err.code = 'GITHUB_TOKEN_INVALID';
+    throw err;
+  }
+  if (!res.ok) throw new Error(`GitHub GraphQL responded with status ${res.status}`);
+
+  const body = await res.json();
+  // GraphQL answers 200 even when something is wrong, with the problem
+  // described in an "errors" list.
+  if (body.errors?.length) throw new Error(`GitHub GraphQL error: ${body.errors[0].message}`);
+
+  return body.data?.viewer?.contributionsCollection?.restrictedContributionsCount ?? 0;
+}

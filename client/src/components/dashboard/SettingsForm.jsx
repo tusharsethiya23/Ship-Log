@@ -37,6 +37,7 @@ export default function SettingsForm({ user, onSaved }) {
   const [timezone, setTimezone] = useState(user.timezone);
   const [cutoff, setCutoff] = useState(user.dayCutoffHour);
   const [repos, setRepos] = useState(user.repos.map((r) => ({ fullName: r.fullName, isPrivate: r.isPrivate })));
+  const [countPrivate, setCountPrivate] = useState(user.countPrivateActivity ?? false);
   const [newRepo, setNewRepo] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
@@ -85,6 +86,7 @@ export default function SettingsForm({ user, onSaved }) {
         timezone,
         dayCutoffHour: Number(cutoff),
         repos,
+        countPrivateActivity: countPrivate,
       });
       onSaved(data.user);
       setStatus('Saved ✅');
@@ -172,6 +174,26 @@ export default function SettingsForm({ user, onSaved }) {
         <p className="mt-1 text-xs text-neutral-400">
           Public repos only for now. Private repos can't be read yet, so they will show as unreachable.
         </p>
+      </div>
+
+      <div>
+        <label className="flex cursor-pointer items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 accent-green-600"
+            checked={countPrivate}
+            onChange={(e) => setCountPrivate(e.target.checked)}
+          />
+          <span>
+            Also count my private activity
+            <span className="mt-1 block text-xs text-neutral-400">
+              Uses the private contribution count GitHub shows on your profile. Turn on "Private contributions" in
+              GitHub's contribution settings (above the graph on your profile page) or it will always read zero.
+              Only a number is read, never repo names, messages, or code. It also counts private issues, pull
+              requests, and reviews.
+            </span>
+          </span>
+        </label>
       </div>
 
       <div className="flex items-center gap-3">

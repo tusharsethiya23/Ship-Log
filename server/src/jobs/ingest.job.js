@@ -1,4 +1,5 @@
-// Every run: check GitHub for today's commits for every user who tracks a repo.
+// Every run: check GitHub for today's activity for every user who tracks a
+// repo or has the private activity option turned on.
 
 import { User } from '../models/User.js';
 import { ingestUser } from '../services/ingest.service.js';
@@ -6,7 +7,9 @@ import { logger } from '../config/logger.js';
 
 export async function runIngestJob() {
   // 'repos.0' exists only when the repos list has at least one item.
-  const users = await User.find({ 'repos.0': { $exists: true } })
+  const users = await User.find({
+    $or: [{ 'repos.0': { $exists: true } }, { countPrivateActivity: true }],
+  })
     .select('_id username')
     .lean();
 

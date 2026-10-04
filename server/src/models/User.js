@@ -62,6 +62,11 @@ const userSchema = new mongoose.Schema(
     // Repos the user picked. An empty list means nothing is tracked yet.
     repos: { type: [repoSchema], default: [] },
 
+    // Opt-in: also count the private activity GitHub reports on the user's
+    // profile. It only works if the user has turned on "Include private
+    // contributions on my profile" in their GitHub settings.
+    countPrivateActivity: { type: Boolean, default: false },
+
     // Where to post the streak. These values are SECRETS, so they are stored
     // encrypted (we write the encryption helper in a later step) and hidden
     // from normal queries with `select: false`.

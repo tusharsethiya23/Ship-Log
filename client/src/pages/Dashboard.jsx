@@ -87,7 +87,9 @@ export default function Dashboard() {
               run(syncNow, (r) =>
                 r.sync.skipped
                   ? `Skipped: ${r.sync.skipped}`
-                  : `Found ${r.sync.commitCount} commit(s) today. Status: ${r.sync.status}` +
+                  : `Found ${r.sync.commitCount} contribution(s) today` +
+                  (r.sync.privateCount ? ` (${r.sync.privateCount} private)` : '') +
+                  `. Status: ${r.sync.status}` +
                   (r.sync.unreachable.length ? `. Could not read: ${r.sync.unreachable.join(', ')}` : '')
               )
             }

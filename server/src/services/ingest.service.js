@@ -1,5 +1,5 @@
-// Checks GitHub for one user's commits on ONE streak day and records the day
-// as "active" if there are any.
+// Checks GitHub for one user's activity on ONE streak day and records the day
+// as "active" if there is any.
 //
 // This only ever ADDS good news. It never creates "missed" days: deciding a
 // day was missed can only happen once the day is over, and that is the
@@ -9,7 +9,7 @@ import { User } from '../models/User.js';
 import { Day } from '../models/Day.js';
 import { decrypt } from '../utils/crypto.js';
 import { getTodayString, getDayWindow } from '../utils/time.js';
-import { countCommits } from './github.service.js';
+import { countCommits, countPrivateContributions } from './github.service.js';
 
 // userId: which user to check.
 // options.now:  can be passed in for tests; defaults to the real current time.
@@ -21,7 +21,10 @@ export async function ingestUser(userId, { now = new Date(), date: forcedDate } 
   // explicitly here with '+githubTokenEncrypted'.
   const user = await User.findById(userId).select('+githubTokenEncrypted');
   if (!user) return { skipped: 'user not found' };
-  if (user.repos.length === 0) return { skipped: 'no repos tracked' };
+
+  // A user needs at least one tracked repo, or the private activity option.
+  const wantsPrivate = Boolean(user.countPrivateActivity);
+  if (user.repos.length === 0 && !wantsPrivate) return { skipped: 'no repos tracked' };
   if (!user.githubTokenEncrypted) return { skipped: 'no GitHub token saved' };
 
   // Which streak day are we checking?
@@ -35,7 +38,7 @@ export async function ingestUser(userId, { now = new Date(), date: forcedDate } 
   const window = getDayWindow(date, user.timezone, user.dayCutoffHour);
 
   let commitCount = 0;
-  const repoNames = []; // repos that had commits that day
+  const repoNames = []; // public repos that had commits that day
   const unreachable = []; // repos we couldn't read
 
   for (const repo of user.repos) {
@@ -58,7 +61,15 @@ export async function ingestUser(userId, { now = new Date(), date: forcedDate } 
     }
   }
 
-  // Commits found: mark the day active. This also turns a claimed rest day
+  // Opt-in: add the private activity count GitHub reports for this day.
+  // Only a number is stored: no private repo names.
+  let privateCount = 0;
+  if (wantsPrivate) {
+    privateCount = await countPrivateContributions(accessToken, { since: window.start, until: window.end });
+    commitCount += privateCount;
+  }
+
+  // Activity found: mark the day active. This also turns a claimed rest day
   // into an active day (commits always win), and creates the record if the
   // day has none yet (that's what `upsert: true` does).
   if (commitCount > 0) {
@@ -72,6 +83,7 @@ export async function ingestUser(userId, { now = new Date(), date: forcedDate } 
   return {
     date,
     commitCount,
+    privateCount, // how many of those came from private activity
     // What the day looks like now: active, or whatever it already was
     // ('rest' if claimed), or 'none' if nothing has been recorded yet.
     status: commitCount > 0 ? 'active' : (existing?.status ?? 'none'),
