@@ -251,3 +251,53 @@ export async function checkRepoAccess(accessToken, fullName) {
     return 'error';
   }
 }
+
+// ---------------------------------------------------------------------------
+// Added in Step 25: listing the repos a user can choose to track.
+// ---------------------------------------------------------------------------
+
+// Returns the "owner/name" of the user's public repos: ones they own, are a
+// collaborator on, or can reach through an organization. Most recently pushed
+// first. Our login can't see private repos, so none are listed.
+//
+// Looks at up to 300 repos (3 pages of 100). Throws for problems that need
+// attention (expired token, GitHub down).
+export async function listUserRepos(accessToken) {
+  const MAX_PAGES = 3;
+  const names = [];
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const params = new URLSearchParams({
+      visibility: 'public',
+      affiliation: 'owner,collaborator,organization_member',
+      sort: 'pushed',
+      direction: 'desc',
+      per_page: '100',
+      page: String(page),
+    });
+
+    const res = await fetch(`https://api.github.com/user/repos?${params}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'ship-log',
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    // Our saved token was revoked or expired: the user must log in again.
+    if (res.status === 401) {
+      const err = new Error('GitHub token is no longer valid');
+      err.code = 'GITHUB_TOKEN_INVALID';
+      throw err;
+    }
+    if (!res.ok) throw new Error(`GitHub responded with status ${res.status} while listing repos`);
+
+    const batch = await res.json();
+    // Archived repos are read-only, so no new commits can ever arrive in them.
+    names.push(...batch.filter((repo) => !repo.archived).map((repo) => repo.full_name));
+
+    if (batch.length < 100) break; // that was the last page
+  }
+  return names;
+}

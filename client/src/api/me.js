@@ -8,6 +8,9 @@ export const getMe = () => http('/api/me');
 // updateMe({ timezone: 'Asia/Kolkata', dayCutoffHour: 3, repos: [...] })
 export const updateMe = (changes) => http('/api/me', { method: 'PATCH', body: changes });
 
+// The repos the user can pick from: { repos: ['owner/name', ...] }
+export const getGithubRepos = () => http('/api/me/github-repos');
+
 export const syncNow = () => http('/api/sync', { method: 'POST' });
 export const claimRestDay = () => http('/api/rest-day', { method: 'POST' });
 export const cancelRestDay = () => http('/api/rest-day', { method: 'DELETE' });
