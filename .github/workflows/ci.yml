@@ -1,0 +1,35 @@
+# Runs the same checks as `npm run check` on GitHub's servers every time you
+# push. A red cross on a commit means something would have broken.
+
+name: Checks
+
+# Run on every push to any branch, and on every pull request.
+on:
+  push:
+  pull_request:
+
+# This workflow only needs to read the code.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    # GitHub's servers run Linux. So does Render, so file-name capitalization
+    # mistakes that Windows hides show up here.
+    runs-on: ubuntu-latest
+    steps:
+      # Download the code.
+      - uses: actions/checkout@v6
+
+      # Install Node 22 (the same version as the deployed app) and keep
+      # downloaded packages between runs so later runs are faster.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      # The same install command our Render build uses.
+      - run: npm install --include=dev
+
+      # Everything: file names, syntax, tests, and the website build.
+      - run: npm run checkc

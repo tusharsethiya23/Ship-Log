@@ -1,6 +1,7 @@
 // Finds imports whose capitalization does not match the real file name.
-// Windows ignores capital letters in file names, but Linux (what Render runs)
-// does not, so a mismatch works on your computer and crashes when deployed.
+// Windows ignores capital letters in file names, but Linux (what Render and
+// GitHub's servers run) does not, so a mismatch works on your computer and
+// crashes when deployed.
 //
 // Usage (from the project root):
 //   node server/scripts/check-imports.js
@@ -15,8 +16,17 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 // The folders that contain our source code.
 const FOLDERS = ['server/src', 'server/scripts', 'server/tests', 'client/src'];
 
-// Matches:  from './x.js'   import('./x.js')   import './x.css'
-const IMPORT_PATTERN = /(?:from\s+|import\s+(?:\(|))['"]([^'"]+)['"]/g;
+// The pattern below finds the quoted file path in each import statement.
+const IMPORT_PATTERN = /(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g;
+
+// Blanks out comment lines, so example code inside comments is never mistaken
+// for a real import. Lines keep their numbers, so reports stay accurate.
+function withoutCommentLines(text) {
+  return text
+    .split('\n')
+    .map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? '' : line))
+    .join('\n');
+}
 
 // Lists every .js and .jsx file under a folder.
 function listSourceFiles(dir) {
@@ -53,7 +63,7 @@ for (const folder of FOLDERS) {
   if (!fs.existsSync(dir)) continue;
 
   for (const file of listSourceFiles(dir)) {
-    const text = fs.readFileSync(file, 'utf8');
+    const text = withoutCommentLines(fs.readFileSync(file, 'utf8'));
 
     for (const match of text.matchAll(IMPORT_PATTERN)) {
       const specifier = match[1];

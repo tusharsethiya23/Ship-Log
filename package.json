@@ -1,9 +1,13 @@
 {
   "name": "ship-log",
   "private": true,
-  "workspaces": ["server", "client"],
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "build": "npm run build --workspace client",
-    "start": "npm start --workspace server"
+    "start": "npm start --workspace server",
+    "check": "node server/scripts/check-imports.js && node server/scripts/check-syntax.js && npm test --workspace server && npm run build"
   }
 }
