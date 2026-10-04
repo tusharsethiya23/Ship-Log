@@ -220,3 +220,34 @@ export async function countPrivateContributions(accessToken, { since, until }) {
 
   return body.data?.viewer?.contributionsCollection?.restrictedContributionsCount ?? 0;
 }
+
+// ---------------------------------------------------------------------------
+// Added in Step 24: checking that a repo can be read before we track it.
+// ---------------------------------------------------------------------------
+
+// Asks GitHub whether a repo exists and is readable with the user's token.
+// Returns:
+//   'ok'         we can read it
+//   'not_found'  it doesn't exist, or it's private (GitHub answers 404 for
+//                private repos because our login can't see them)
+//   'error'      GitHub couldn't be reached, so we can't tell
+// Never throws.
+export async function checkRepoAccess(accessToken, fullName) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${fullName}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'ship-log',
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (res.status === 404) return 'not_found';
+    if (!res.ok) return 'error';
+
+    const repo = await res.json();
+    return repo.private ? 'not_found' : 'ok';
+  } catch {
+    return 'error';
+  }
+}
